@@ -17,6 +17,8 @@ module FIR
 
       logger.info 'begin to upload ...'
       logger.info "fir-cli version #{FIR::VERSION} (#{RUBY_VERSION} @ #{RUBY_PLATFORM})"
+      # 开始上传
+
       received_app_info = upload_app
 
       short = received_app_info[:short]
@@ -40,11 +42,20 @@ module FIR
 
       logger_info_blank_line
 
-      {
+      answer = {
         app_id: @app_id,
+        short: short,
         release_id: release_id,
-        short: short
+        download_url: download_url,
+        time: Time.now.strftime("%F %T%:z")
       }
+
+      if options[:save_uploaded_info]
+        write_uploaded_info(answer)
+      end
+
+      answer
+
     end
 
     def fetch_app_info
@@ -109,6 +120,12 @@ module FIR
         tag: 'fir_cli',
         referer: "https://#{FIR::VERSION}.fir-cli/#{short}"
       )
+    end
+
+    def write_uploaded_info(answer)
+      File.open('fir-cli-answer.json', 'w') do |f|
+        f.write(answer.to_json)
+      end
     end
 
     def upload_device_info

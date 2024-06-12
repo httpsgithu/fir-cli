@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'uri'
 require_relative './app_uploader'
 
 
@@ -39,6 +40,15 @@ module FIR
           'authorization' => headers[:authorization]
         }
 
+        if @options[:user_download_file_name] != nil
+          # 处理中文问题, 使之支持 CONTENT-DISPOSITION 的要求
+
+
+          headers_copy["CONTENT-DISPOSITION"] = "attachment; filename=#{URI.encode_www_form_component @options[:user_download_file_name]}"
+
+
+        end
+
         logger.debug headers_copy
         put_file(binary_url, binary_info, headers_copy)
         callback_to_api(callback_url, callback_binary_information)
@@ -53,10 +63,10 @@ module FIR
     def put_file(url, file, headers, need_progress = true)
 
       uri = URI(url)
-      hostname = uri.hostname 
+      hostname = uri.hostname
 
 
-      File.open(file_path, 'rb') do |io|
+      File.open(file.path, 'rb') do |io|
         t = Time.now
         http = Net::HTTP.new(hostname, 443)
         http.use_ssl = true
